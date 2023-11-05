@@ -17,8 +17,9 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Go workspace file
+# Go file
 go.work
+vendor
 
 # rfb files
 *.csv

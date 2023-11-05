@@ -130,4 +130,3 @@ func ReadDir(dir string) []string {
 
 	return fd
 }
-
