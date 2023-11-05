@@ -1,0 +1,4 @@
+postgresql_user: "postgresql"
+postgresql_pwd: "postgresql"
+postgresql_host: "localhos:5432"
+postgresql_database: "dados"
