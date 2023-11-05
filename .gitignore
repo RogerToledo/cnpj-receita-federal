@@ -19,3 +19,12 @@
 
 # Go workspace file
 go.work
+
+# rfb files
+*.csv
+*.ESTABELE
+*.zip
+
+# ide
+.DS_Store
+.vscode
