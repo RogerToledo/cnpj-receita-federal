@@ -97,7 +97,7 @@ func ReadCSVZIP(path string) {
 
 func removeQuotes(path string) string {
 	fileCSV := strings.Replace(path, "ESTABELE", "csv", 1)
-	output := fmt.Sprintf("%s.csv", fileCSV)
+	output := strings.Replace(fileCSV, "files/files/estabele", "files/files/csv", 1)
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {

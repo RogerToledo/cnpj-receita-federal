@@ -27,3 +27,4 @@ go.work
 
 # ide
 .DS_Store
+.vscode
