@@ -6,8 +6,8 @@ import (
 
 func Load() (*viper.Viper, error) {
 	conf := viper.GetViper()
-	conf.AddConfigPath(".")
-	conf.SetConfigFile("config")
+	conf.AddConfigPath("./config")
+	conf.SetConfigName("conf")
 	conf.SetConfigType("yaml")
 	if err := conf.ReadInConfig(); err != nil {
 		return nil, err

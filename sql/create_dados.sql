@@ -1,5 +1,6 @@
 create table dados (
 	id serial primary key,
+	cnpj varchar(16) unique,
 	cnpj_basico varchar(8),
 	cnpj_ordem varchar(4),
 	cnpj_dv varchar(2),
