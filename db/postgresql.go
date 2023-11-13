@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/me/rfb/config"
+	_ "github.com/lib/pq"
 )
 
 func NewConnect() (*sql.DB, error) {

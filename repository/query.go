@@ -69,7 +69,7 @@ const (
 		$32
 	) 
 	on conflict (cnpj)
-	do update dados set 
+	do update set 
 		cnpj = $1,
 		cnpj_basico = $2,
 		cnpj_ordem = $3,
@@ -101,42 +101,5 @@ const (
 		email = $29,
 		situacao_especial = $30,
 		data_situacao_especial = $31,
-		update_at = $33
-	where cnpj = $1`
-
-	Update = `update dados set 
-		cnpj = $1,
-		cnpj_basico = $2,
-		cnpj_ordem = $3,
-		cnpj_dv = $4,
-		identificador = $5,
-		nome_fantasia = $6,
-		situacao_cadastral = $7,
-		data_situacao_cadastral = $8,
-		motivo_situacao_cadastral = $9,
-		nome_cidade_exterior = $10,
-		pais = $11,
-		data_inicio = $12,
-		cnae_principal = $13,
-		cnae_secundario = $14,
-		tipo_logradouro = $15,
-		logradouro = $16,
-		numero = $17,
-		complemento = $18,
-		bairro = $19,
-		cep = $20,
-		uf = $21,
-		municipio = $22,
-		ddd_1 = $23,
-		telefone_1 = $24,
-		ddd_2 = $25,
-		telefone_2 = $26,
-		ddd_fax = $27,
-		fax = $28,
-		email = $29,
-		situacao_especial = $30,
-		data_situacao_especial = $31,
-		create_at = $32,
-		update_at = $33
-	where cnpj = $1`
+		update_at = $32`
 )
