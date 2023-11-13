@@ -1,125 +1,100 @@
 package file
 
 import (
-	"compress/gzip"
-	"encoding/csv"
+	"bufio"
+	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/me/rfb/repository"
 )
 
-func ReadSaveCSV(paths []string) {
+func Process(db *sql.DB, paths []string) error {
+	fmt.Println("Processing ...")
 
-	newPath := removeQuotes(paths[1])
-
-	file, err := os.Open(newPath)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	reader := csv.NewReader(file)
-
-	for {
-		record, err := reader.Read()
-		if err == csv.ErrFieldCount {
-			break
-		}
+	for _, path := range paths {
+		csvPath, err:= formatTXT(path)
 		if err != nil {
-			panic(err)
+			fmt.Printf("Error formatCSV: %s", err)
+			return err
 		}
-
-		rc := strings.Split(record[0], ";")
-
-		println(rc[0])
-		println(rc[1])
-		println(rc[2])
-		println(rc[3])
-		println(rc[4])
-		println(rc[5])
-		println(rc[6])
-		println(rc[7])
-		println(rc[8])
-		println(rc[9])
-		println(rc[10])
-		println(rc[11])
-		println(rc[12])
-		println(rc[13])
-		println(rc[14])
-		println(rc[15])
-		println(rc[16])
-		println(rc[17])
-		println(rc[18])
-		println(rc[19])
-		println(rc[20])
-		println(rc[21])
-		println(rc[22])
-		println(rc[23])
-		println(rc[24])
-		println(rc[25])
-		println(rc[26])
-		println(rc[27])
-		println(rc[28])
-		println(rc[29])
-
-		println()
-
+	
+		if err := ReadSaveTXT(db, csvPath); err != nil {
+			return err
+		}
 	}
+
+	fmt.Println("Ending Process ...")
+
+	return nil
 }
 
-func ReadCSVZIP(path string) {
+func ReadSaveTXT(db *sql.DB, path string) error {
+	fmt.Printf("Reading path: %s", path)
+
 	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	reader, err := gzip.NewReader(file)
-	if err != nil {
-		panic(err)
-	}
+	countSave := 0
+	countSkip := 0
 
-	for {
-		buf := make([]byte, 1024)
-		record, err := reader.Read(buf)
-		if err == gzip.ErrHeader {
-			break
-		}
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		fields := strings.Split(line, ";")
+
+		repository := repository.NewRepository(db)
+
+		err := repository.Upsert(fields)
 		if err != nil {
-			panic(err)
+			countSkip++
+			fmt.Printf("Error saving on database: %v", err)
+			continue
 		}
-		println(record) // [1 2 3 4]
-		println()
+
+		countSave++
+		
+		fmt.Printf("Path: %s, Saved: %d, Skipped: %d", path, countSave, countSkip)
 
 	}
+
+	return nil
 }
 
-func removeQuotes(path string) string {
-	fileCSV := strings.Replace(path, "ESTABELE", "csv", 1)
-	output := strings.Replace(fileCSV, "files/files/estabele", "files/files/csv", 1)
+func formatTXT(path string) (string, error) {
+	fileTXT := strings.Replace(path, "ESTABELE", "txt", 1)
+	output := strings.Replace(fileTXT, "files/files/estabele", "files/files/txt", 1)
 
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("Error ReadFile: ", err)
 	}
 	lines := strings.Split(string(data), "\n")
 
-	for i, line := range lines {
-		lines[i] = strings.ReplaceAll(line, "\"", "")
+	newLines := make([]string, 0)
+
+	for _, line := range lines {
+		line := strings.ReplaceAll(line, "\"", "")
+		newLines = append(newLines, line)
 	}
 
-	if err = ioutil.WriteFile(output, []byte(strings.Join(lines, "\n")), 0644); err != nil {
-		panic(err)
+	if err = os.WriteFile(output, []byte(strings.Join(newLines, "\n")), 0644); err != nil {
+		return "", fmt.Errorf("Error WriteFile: ", err)
 	}
 
-	return output
+	return output, nil
 }
 
 func ReadDir(dir string) []string {
 	fd := make([]string, 0)
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		panic(err)
 	}
@@ -130,4 +105,3 @@ func ReadDir(dir string) []string {
 
 	return fd
 }
-
