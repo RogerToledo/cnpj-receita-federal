@@ -12,8 +12,10 @@ func main() {
 	
 	db, err := db.NewConnect()
 	if err != nil {
-		fmt.Errorf("Was not possible to connect to database - %s", err)
+		fmt.Println(err)
+		panic("Was not possible to connect to database")
 	}
+	defer db.Close()
 	
-	file.ReadSaveCSV(db, files)
+	file.Process(db, files)
 }
