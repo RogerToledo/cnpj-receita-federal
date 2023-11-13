@@ -1,8 +1,8 @@
 package file
 
 import (
+	"bufio"
 	"database/sql"
-	"encoding/csv"
 	"fmt"
 	"os"
 	"strings"
@@ -10,59 +10,85 @@ import (
 	"github.com/me/rfb/repository"
 )
 
-func ReadSaveCSV(db *sql.DB, paths []string) error {
+func Process(db *sql.DB, paths []string) error {
+	fmt.Println("Processing ...")
 
-	newPath := removeQuotes(paths[10])
+	for _, path := range paths {
+		csvPath, err:= formatTXT(path)
+		if err != nil {
+			fmt.Printf("Error formatCSV: %s", err)
+			return err
+		}
+	
+		if err := ReadSaveTXT(db, csvPath); err != nil {
+			return err
+		}
+	}
 
-	file, err := os.Open(newPath)
+	fmt.Println("Ending Process ...")
+
+	return nil
+}
+
+func ReadSaveTXT(db *sql.DB, path string) error {
+	fmt.Printf("Reading path: %s", path)
+
+	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
+	countSave := 0
+	countSkip := 0
 
-	for {
-		result, err := reader.Read()
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
 
-		if err == csv.ErrFieldCount {
-			break
-		}
-		if err != nil {
-			panic(err)
-		}
-
-		rs := strings.Split(result[0], ";")
+	for fileScanner.Scan() {
+		line := fileScanner.Text()
+		fields := strings.Split(line, ";")
 
 		repository := repository.NewRepository(db)
 
-		if err := repository.UpsertTx(rs); err != nil {
-			fmt.Errorf("Error saving on database: %v", err)
+		err := repository.Upsert(fields)
+		if err != nil {
+			countSkip++
+			fmt.Printf("Error saving on database: %v", err)
+			continue
 		}
+
+		countSave++
+		
+		fmt.Printf("Path: %s, Saved: %d, Skipped: %d", path, countSave, countSkip)
+
 	}
 
 	return nil
 }
 
-func removeQuotes(path string) string {
-	fileCSV := strings.Replace(path, "ESTABELE", "csv", 1)
-	output := strings.Replace(fileCSV, "files/files/estabele", "files/files/csv", 1)
+func formatTXT(path string) (string, error) {
+	fileTXT := strings.Replace(path, "ESTABELE", "txt", 1)
+	output := strings.Replace(fileTXT, "files/files/estabele", "files/files/txt", 1)
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("Error ReadFile: ", err)
 	}
 	lines := strings.Split(string(data), "\n")
 
-	for i, line := range lines {
-		lines[i] = strings.ReplaceAll(line, "\"", "")
+	newLines := make([]string, 0)
+
+	for _, line := range lines {
+		line := strings.ReplaceAll(line, "\"", "")
+		newLines = append(newLines, line)
 	}
 
-	if err = os.WriteFile(output, []byte(strings.Join(lines, "\n")), 0644); err != nil {
-		panic(err)
+	if err = os.WriteFile(output, []byte(strings.Join(newLines, "\n")), 0644); err != nil {
+		return "", fmt.Errorf("Error WriteFile: ", err)
 	}
 
-	return output
+	return output, nil
 }
 
 func ReadDir(dir string) []string {
