@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/me/rfb/repository"
+	"github.com/me/rfb/validation"
 )
 
 const (
@@ -55,14 +56,13 @@ func ReadSaveTXT(db *sql.DB, path string) error {
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		fields := strings.Split(line, ";")
+		fields := lineToMap(line)
 
 		repository := repository.NewRepository(db)
 
-		err := repository.Upsert(fields)
+		err := repository.Upsert(fields, path)
 		if err != nil {
 			fmt.Printf("error saving on database: %v", err)
-			continue
 		}
 	}
 
@@ -143,4 +143,45 @@ func moveFile(path string) error {
 	}
 
 	return nil
+}
+
+func lineToMap(line string) map[string]string {
+	m := make(map[string]string)
+
+	slice := strings.Split(line, ";")
+
+	validation.Fields["cnpjBasico"] = slice[0]
+	validation.Fields["cnpjOrdem"] = slice[1]
+	validation.Fields["cnpjDV"] = slice[2]
+	validation.Fields["identificador"] = slice[3]
+	validation.Fields["nomeFantasia"] = slice[4]
+	validation.Fields["situacaoCadastral"] = slice[5]
+	validation.Fields["dataSituacaoCadastral"] = slice[6]
+	validation.Fields["motivoSituacaoCadastral"] = slice[7]
+	validation.Fields["nomeCidadeExterior"] = slice[8]
+	validation.Fields["pais"] = slice[9]
+	validation.Fields["dataInicio"] = slice[10]
+	validation.Fields["cnaePrincipal"] = slice[11]
+	validation.Fields["cnaeSecundario"] = slice[12]
+	validation.Fields["tipoLogradouro"] = slice[13]
+	validation.Fields["logradouro"] = slice[14]
+	validation.Fields["numero"] = slice[15]
+	validation.Fields["complemento"] = slice[16]
+	validation.Fields["bairro"] = slice[17]
+	validation.Fields["cep"] = slice[18]
+	validation.Fields["uf"] = slice[19]
+	validation.Fields["municipio"] = slice[20]
+	validation.Fields["ddd1"] = slice[21]
+	validation.Fields["telefone1"] = slice[22]
+	validation.Fields["ddd2"] = slice[23]
+	validation.Fields["telefone2"] = slice[24]
+	validation.Fields["dddFax"] = slice[25]
+	validation.Fields["fax" ] = slice[26]
+	validation.Fields["email"] = slice[27]
+	validation.Fields["situacaoEspecial"] = slice[28]
+	validation.Fields["dataSituacaoEspecial"] = slice[29]
+
+	m = validation.Fields
+
+	return m
 }
