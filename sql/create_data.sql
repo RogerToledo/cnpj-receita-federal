@@ -1,10 +1,10 @@
--- public.data definition
+-- public.rfb_data definition
 
 -- Drop table
 
--- DROP TABLE public.data;
+-- DROP TABLE public.rfb_data;
 
-CREATE TABLE public.data (
+CREATE TABLE public.rfb_data (
 	id serial4 NOT NULL,
 	cnpj varchar(16) NULL,
 	cnpj_basico varchar(8) NULL,
@@ -42,4 +42,4 @@ CREATE TABLE public.data (
 	CONSTRAINT dados_cnpj_key UNIQUE (cnpj),
 	CONSTRAINT dados_pkey PRIMARY KEY (id)
 );
-CREATE INDEX idx_data_cnpj ON public.data USING hash (cnpj);
+CREATE INDEX idx_rfb_data_cnpj ON public.rfb_data USING hash (cnpj);

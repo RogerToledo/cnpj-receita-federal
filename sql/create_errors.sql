@@ -6,8 +6,11 @@
 
 CREATE TABLE public.errors (
 	id serial4 NOT NULL,
-	cnpj varchar(30) NULL,
+	cnpj varchar(30) NOT NULL,
+	field varchar(255) NULL,
+	value varchar(255) NULL,
 	error varchar(255) NULL,
+	file varchar(50) NULL,
 	create_at timestamp NULL,
 	CONSTRAINT errors_pkey PRIMARY KEY (id)
 );
