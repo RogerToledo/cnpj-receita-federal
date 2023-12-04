@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/lib/pq v1.10.9
-	github.com/opencontainers/runc v1.1.10
 	github.com/spf13/viper v1.17.0
 )
 
