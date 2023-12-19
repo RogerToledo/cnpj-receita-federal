@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	pathTXT = "files/files/txt"
+	pathTXT   = "files/files/txt"
 	pathEstab = "files/files/estabele"
-	pathDone = "files/files/done"
+	pathDone  = "files/files/done"
 )
 
 func Process(db *sql.DB, paths []string) error {
@@ -35,7 +35,7 @@ func Process(db *sql.DB, paths []string) error {
 		if err := ReadSaveTXT(db, file); err != nil {
 			return err
 		}
-	}	
+	}
 
 	fmt.Println("Ending Process ...")
 
@@ -84,7 +84,9 @@ func formatTXT(path string) error {
 		return fmt.Errorf("error ReadFile: %s", err)
 	}
 
-	lines := strings.Split(string(data), "\n")
+	UTF8 := ISO88591ToUTF8(data)
+
+	lines := strings.Split(string(UTF8), "\n")
 
 	_, err = writeFile(lines, output)
 	if err != nil {
@@ -119,7 +121,7 @@ func writeFile(lines []string, output string) (string, error) {
 		line := strings.ReplaceAll(line, "\"", "")
 		newLines = append(newLines, line)
 
-		if len(newLines) == maxLines {
+		if len(newLines) == maxLines || len(newLines) == len(lines) {
 			numFile := fmt.Sprintf("_%d.txt", num)
 			file = strings.Replace(output, ".txt", numFile, 1)
 
@@ -146,8 +148,6 @@ func moveFile(path string) error {
 }
 
 func lineToMap(line string) map[string]string {
-	m := make(map[string]string)
-
 	slice := strings.Split(line, ";")
 
 	validation.Fields["cnpjBasico"] = slice[0]
@@ -176,12 +176,21 @@ func lineToMap(line string) map[string]string {
 	validation.Fields["ddd2"] = slice[23]
 	validation.Fields["telefone2"] = slice[24]
 	validation.Fields["dddFax"] = slice[25]
-	validation.Fields["fax" ] = slice[26]
+	validation.Fields["fax"] = slice[26]
 	validation.Fields["email"] = slice[27]
 	validation.Fields["situacaoEspecial"] = slice[28]
 	validation.Fields["dataSituacaoEspecial"] = slice[29]
 
-	m = validation.Fields
+	m := validation.Fields
 
 	return m
+}
+
+func ISO88591ToUTF8(iso88591 []byte) string {
+    buf := make([]rune, len(iso88591))
+    for i, b := range iso88591 {
+        buf[i] = rune(b)
+    }
+
+    return string(buf)
 }
