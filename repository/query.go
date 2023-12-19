@@ -1,7 +1,7 @@
 package repository
 
 const (
-	Insert = `insert into dados (
+	Insert = `insert into rfb_data (
 		cnpj,
 		cnpj_basico,
 		cnpj_ordem,
@@ -102,4 +102,20 @@ const (
 		situacao_especial = $30,
 		data_situacao_especial = $31,
 		update_at = $32`
+
+	InsertError = `insert into errors (
+		cnpj,
+		field,
+		value,
+		error,
+		file,
+		create_at
+	) values (
+		$1,
+		$2,
+		$3,
+		$4,
+		$5,
+		$6
+	)`	
 )
