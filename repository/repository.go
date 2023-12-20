@@ -27,7 +27,22 @@ func (r *repository) Transaction() (*sql.Tx, error) {
 
 }
 
-func (r *repository) Upsert(fields map[string]string, path string) error {
+func (r *repository) Save(fields map[string]string, path string) error {
+	skipUpsert, err := skipUpsert(r, fields["hash"])
+	if err != nil {
+		return err
+	}
+
+	if !skipUpsert {
+		if err := upsert(r, fields, path); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func upsert(r *repository, fields map[string]string, path string) error {
 	fields, errs := validation.ValidateData(fields, path)
 	if len(errs) != 0 {
 		err := insertError(r, errs, path)
@@ -74,41 +89,43 @@ func (r *repository) Upsert(fields map[string]string, path string) error {
 	dataSituacaoEspecial := formatDate( fields["dataSituacaoEspecial"] )
 	date := time.Now()
 	dateNow := date.Format("2006-01-02 03:04:05")
+	hash := fields["hash"]
 
 	_, err := r.db.Exec(
 		query,
-		cnpj,
-		cnpjBasico,
-		cnpjOrdem,
-		cnpjDV,
-		identificador,
-		nomeFantasia,
-		situacaoCadastral,
-		dataSituacaoCadastral,
-		motivoSituacaoCadastral,
-		nomeCidadeExterior,
-		pais,
-		dataInicio,
-		cnaePrincipal,
-		cnaeSecundario,
-		tipoLogradouro,
-		logradouro,
-		numero,
-		complemento,
-		bairro,
-		cep,
-		uf,
-		municipio,
-		ddd1,
-		telefone1,
-		ddd2,
-		telefone2,
-		dddFax,
-		fax,
-		email,
-		situacaoEspecial,
-		dataSituacaoEspecial,
-		dateNow,
+		cnpj, // 1                      
+		cnpjBasico, // 2
+		cnpjOrdem, // 3
+		cnpjDV, // 4
+		identificador, // 5
+		nomeFantasia, // 6
+		situacaoCadastral, // 7	
+		dataSituacaoCadastral, // 8
+		motivoSituacaoCadastral, // 9
+		nomeCidadeExterior, // 10
+		pais, // 11
+		dataInicio, // 12 	
+		cnaePrincipal, // 13
+		cnaeSecundario, // 14
+		tipoLogradouro, // 15
+		logradouro, // 16
+		numero, // 17
+		complemento, // 18
+		bairro, // 19
+		cep, // 20
+		uf, // 21
+		municipio, // 22
+		ddd1, // 23
+		telefone1, // 24
+		ddd2, // 25
+		telefone2, // 26
+		dddFax, // 27
+		fax, // 28
+		email, // 29
+		situacaoEspecial, // 30
+		dataSituacaoEspecial, // 31
+		dateNow, // 32
+		hash, // 33
 	)
 
 	return err
@@ -134,6 +151,23 @@ func insertError(r *repository, errors []validation.ErrorStruct, path string) er
 	}
 
 	return err
+}
+
+func skipUpsert(r *repository, hash string) (bool, error) {
+	const noRows = "sql: no rows in result set"
+	var id int
+	query := SelectHash
+
+	err := r.db.QueryRow(query, hash).Scan(&id)
+	if err != nil && err.Error() != noRows {
+		return true, err
+	} 
+	
+	if err != nil && err.Error() == noRows {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func formatDate(s string) string {
