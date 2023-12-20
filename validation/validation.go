@@ -15,39 +15,6 @@ type ErrorStruct = struct {
 	Date  string
 }
 
-var Fields = map[string]string{
-	"cnpjBasico":              "",
-	"cnpjOrdem":               "",
-	"cnpjDV":                  "",
-	"identificador":           "",
-	"nomeFantasia":            "",
-	"situacaoCadastral":       "",
-	"dataSituacaoCadastral":   "",
-	"motivoSituacaoCadastral": "",
-	"nomeCidadeExterior":      "",
-	"pais":                    "",
-	"dataInicio":              "",
-	"cnaePrincipal":           "",
-	"cnaeSecundario":          "",
-	"tipoLogradouro":          "",
-	"logradouro":              "",
-	"numero":                  "",
-	"complemento":             "",
-	"bairro":                  "",
-	"cep":                     "",
-	"uf":                      "",
-	"municipio":               "",
-	"ddd1":                    "",
-	"telefone1":               "",
-	"ddd2":                    "",
-	"telefone2":               "",
-	"dddFax":                  "",
-	"fax":                     "",
-	"email":                   "",
-	"situacaoEspecial":        "",
-	"dataSituacaoEspecial":    "",
-}
-
 var fieldsValid = map[string]int{
 	"cnpjBasico":              8,
 	"cnpjOrdem":               4,
@@ -79,6 +46,7 @@ var fieldsValid = map[string]int{
 	"email":                   100,
 	"situacaoEspecial":        250,
 	"dataSituacaoEspecial":    8,
+	"hash":                    64,
 }
 
 func ValidateData(fields map[string]string, path string) (map[string]string, []ErrorStruct) {
