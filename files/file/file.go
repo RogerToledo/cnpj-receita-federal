@@ -2,13 +2,14 @@ package file
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/me/rfb/base"
 	"github.com/me/rfb/repository"
-	"github.com/me/rfb/validation"
 )
 
 const (
@@ -32,7 +33,7 @@ func Process(db *sql.DB, paths []string) error {
 	}
 
 	for _, file := range files {
-		if err := ReadSaveTXT(db, file); err != nil {
+		if err := ReadTXTSave(db, file); err != nil {
 			return err
 		}
 	}
@@ -42,7 +43,7 @@ func Process(db *sql.DB, paths []string) error {
 	return nil
 }
 
-func ReadSaveTXT(db *sql.DB, path string) error {
+func ReadTXTSave(db *sql.DB, path string) error {
 	fmt.Printf("Reading and Saving path: %s\n", path)
 
 	file, err := os.Open(path)
@@ -60,7 +61,7 @@ func ReadSaveTXT(db *sql.DB, path string) error {
 
 		repository := repository.NewRepository(db)
 
-		err := repository.Upsert(fields, path)
+		err := repository.Save(fields, path)
 		if err != nil {
 			fmt.Printf("error saving on database: %v", err)
 		}
@@ -150,47 +151,56 @@ func moveFile(path string) error {
 func lineToMap(line string) map[string]string {
 	slice := strings.Split(line, ";")
 
-	validation.Fields["cnpjBasico"] = slice[0]
-	validation.Fields["cnpjOrdem"] = slice[1]
-	validation.Fields["cnpjDV"] = slice[2]
-	validation.Fields["identificador"] = slice[3]
-	validation.Fields["nomeFantasia"] = slice[4]
-	validation.Fields["situacaoCadastral"] = slice[5]
-	validation.Fields["dataSituacaoCadastral"] = slice[6]
-	validation.Fields["motivoSituacaoCadastral"] = slice[7]
-	validation.Fields["nomeCidadeExterior"] = slice[8]
-	validation.Fields["pais"] = slice[9]
-	validation.Fields["dataInicio"] = slice[10]
-	validation.Fields["cnaePrincipal"] = slice[11]
-	validation.Fields["cnaeSecundario"] = slice[12]
-	validation.Fields["tipoLogradouro"] = slice[13]
-	validation.Fields["logradouro"] = slice[14]
-	validation.Fields["numero"] = slice[15]
-	validation.Fields["complemento"] = slice[16]
-	validation.Fields["bairro"] = slice[17]
-	validation.Fields["cep"] = slice[18]
-	validation.Fields["uf"] = slice[19]
-	validation.Fields["municipio"] = slice[20]
-	validation.Fields["ddd1"] = slice[21]
-	validation.Fields["telefone1"] = slice[22]
-	validation.Fields["ddd2"] = slice[23]
-	validation.Fields["telefone2"] = slice[24]
-	validation.Fields["dddFax"] = slice[25]
-	validation.Fields["fax"] = slice[26]
-	validation.Fields["email"] = slice[27]
-	validation.Fields["situacaoEspecial"] = slice[28]
-	validation.Fields["dataSituacaoEspecial"] = slice[29]
+	base.Fields["cnpjBasico"] = slice[0]
+	base.Fields["cnpjOrdem"] = slice[1]
+	base.Fields["cnpjDV"] = slice[2]
+	base.Fields["identificador"] = slice[3]
+	base.Fields["nomeFantasia"] = slice[4]
+	base.Fields["situacaoCadastral"] = slice[5]
+	base.Fields["dataSituacaoCadastral"] = slice[6]
+	base.Fields["motivoSituacaoCadastral"] = slice[7]
+	base.Fields["nomeCidadeExterior"] = slice[8]
+	base.Fields["pais"] = slice[9]
+	base.Fields["dataInicio"] = slice[10]
+	base.Fields["cnaePrincipal"] = slice[11]
+	base.Fields["cnaeSecundario"] = slice[12]
+	base.Fields["tipoLogradouro"] = slice[13]
+	base.Fields["logradouro"] = slice[14]
+	base.Fields["numero"] = slice[15]
+	base.Fields["complemento"] = slice[16]
+	base.Fields["bairro"] = slice[17]
+	base.Fields["cep"] = slice[18]
+	base.Fields["uf"] = slice[19]
+	base.Fields["municipio"] = slice[20]
+	base.Fields["ddd1"] = slice[21]
+	base.Fields["telefone1"] = slice[22]
+	base.Fields["ddd2"] = slice[23]
+	base.Fields["telefone2"] = slice[24]
+	base.Fields["dddFax"] = slice[25]
+	base.Fields["fax"] = slice[26]
+	base.Fields["email"] = slice[27]
+	base.Fields["situacaoEspecial"] = slice[28]
+	base.Fields["dataSituacaoEspecial"] = slice[29]
+	base.Fields["hash"] = getLineHash(line)
 
-	m := validation.Fields
+	m := base.Fields
 
 	return m
 }
 
 func ISO88591ToUTF8(iso88591 []byte) string {
-    buf := make([]rune, len(iso88591))
-    for i, b := range iso88591 {
-        buf[i] = rune(b)
-    }
+	buf := make([]rune, len(iso88591))
+	for i, b := range iso88591 {
+		buf[i] = rune(b)
+	}
 
-    return string(buf)
+	return string(buf)
+}
+
+func getLineHash(line string) string {
+	sha := sha256.New()
+
+	sha.Write([]byte(line))
+
+	return fmt.Sprintf("%x", sha.Sum(nil))
 }

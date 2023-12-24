@@ -39,7 +39,11 @@ CREATE TABLE public.rfb_data (
 	data_situacao_especial date NULL,
 	create_at timestamp NULL,
 	update_at timestamp NULL,
-	CONSTRAINT dados_cnpj_key UNIQUE (cnpj),
-	CONSTRAINT dados_pkey PRIMARY KEY (id)
+	hash varchar(64) NOT NULL,
+	CONSTRAINT data_hash UNIQUE (hash),
+	CONSTRAINT data_cnpj_key UNIQUE (cnpj),
+	CONSTRAINT data_pkey PRIMARY KEY (id)
 );
+CREATE INDEX idx_rfb_data_id ON public.rfb_data USING hash (id);
 CREATE INDEX idx_rfb_data_cnpj ON public.rfb_data USING hash (cnpj);
+CREATE INDEX idx_rfb_data_hash ON public.rfb_data USING hash (hash);

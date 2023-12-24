@@ -33,7 +33,8 @@ const (
 		email,
 		situacao_especial,
 		data_situacao_especial,
-		create_at
+		create_at,
+		hash
 	) values (
 		$1,
 		$2,
@@ -66,7 +67,8 @@ const (
 		$29,
 		$30,
 		$31,
-		$32
+		$32,
+		$33
 	) 
 	on conflict (cnpj)
 	do update set 
@@ -101,7 +103,9 @@ const (
 		email = $29,
 		situacao_especial = $30,
 		data_situacao_especial = $31,
-		update_at = $32`
+		update_at = $32,
+		hash = $33
+		`
 
 	InsertError = `insert into errors (
 		cnpj,
@@ -118,4 +122,6 @@ const (
 		$5,
 		$6
 	)`	
+
+	SelectHash = `select id from rfb_data where hash = $1`
 )
