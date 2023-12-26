@@ -28,3 +28,45 @@ func TestGetLineHash(t *testing.T) {
 		}
 	}
 }
+
+func TestCanWrite(t *testing.T) {
+	cases := []struct {
+		description string
+		input       string
+		expected    bool
+	}{
+		{
+			description: "Retuns true if the line is empty",
+			input:       "",
+			expected:    false,
+		},
+		{
+			description: "Retuns true if the line contain the cnae 2621300",
+			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+			expected:    true,
+		},
+		{
+			description: "Retuns true if the line contain the cnae 2622100",
+			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2622100;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+			expected:    true,
+		},
+		{
+			description: "Retuns true if the line contain the secundary cnae 2622100",
+			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;7739099;4541205;4541203,4541206,4619200,4753900,6204000,7020400,7112000,2622100,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+			expected:    true,
+		},
+		{
+			description: "Retuns false if the line without valid cnae",
+			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621400;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;",
+			expected:    false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Log(tc.description)
+		output := canWrite(tc.input)
+		if output != tc.expected {
+			t.Errorf("canWrite(%q) = %v; want %v", tc.input, output, tc.expected)
+		}
+	}
+}

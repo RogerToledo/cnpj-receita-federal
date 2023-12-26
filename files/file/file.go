@@ -215,7 +215,10 @@ func getLineHash(line string) string {
 }
 
 func canWrite(line string) bool {
-	cnaes := []string{";2621300;", ";2622100;"}
+	cnaes := []string{
+		";2621300;", ";2621300,", ",2621300,", ",2621300;", 
+		";2622100;", ";2622100,", ",2622100,", ";2622100,",
+	}
 
 	if line == "" {
 		return false
