@@ -158,6 +158,10 @@ func moveFile(path string) error {
 }
 
 func lineToMap(line string) map[string]string {
+	if line == "" {
+		return map[string]string{}
+	}
+	
 	slice := strings.Split(line, ";")
 
 	base.Fields["cnpjBasico"] = slice[0]
