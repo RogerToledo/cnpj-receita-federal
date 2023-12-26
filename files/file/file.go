@@ -30,6 +30,8 @@ func Process(db *sql.DB, paths []string) error {
 				return err
 			}
 		}
+
+		files = ReadDir(pathTXT)
 	}
 
 	for _, file := range files {
@@ -85,9 +87,7 @@ func formatTXT(path string) error {
 		return fmt.Errorf("error ReadFile: %s", err)
 	}
 
-	UTF8 := ISO88591ToUTF8(data)
-
-	lines := strings.Split(string(UTF8), "\n")
+	lines := strings.Split(string(data), "\n")
 
 	_, err = writeFile(lines, output)
 	if err != nil {
@@ -115,14 +115,23 @@ func ReadDir(dir string) []string {
 func writeFile(lines []string, output string) (string, error) {
 	const maxLines = 100000
 	newLines := make([]string, 0)
+	countLines := 0
 	num := 0
 	file := ""
 
-	for _, line := range lines {
-		line := strings.ReplaceAll(line, "\"", "")
-		newLines = append(newLines, line)
+	fmt.Println("Writing file ...")
 
-		if len(newLines) == maxLines || len(newLines) == len(lines) {
+	for _, line := range lines {
+		countLines++
+		line := strings.ReplaceAll(line, "\"", "")
+		
+		couldWrite := canWrite(line)
+		if couldWrite {
+			lineUTF8 := ISO88591ToUTF8([]byte(line))
+			newLines = append(newLines, lineUTF8)
+		}
+
+		if len(newLines) == maxLines || countLines == len(lines) {
 			numFile := fmt.Sprintf("_%d.txt", num)
 			file = strings.Replace(output, ".txt", numFile, 1)
 
@@ -203,4 +212,20 @@ func getLineHash(line string) string {
 	sha.Write([]byte(line))
 
 	return fmt.Sprintf("%x", sha.Sum(nil))
+}
+
+func canWrite(line string) bool {
+	cnaes := []string{";2621300;", ";2622100;"}
+
+	if line == "" {
+		return false
+	}
+
+	for _, cnae := range cnaes {
+		if strings.Contains(line, cnae) {
+			return true
+		}
+	}
+
+	return false
 }

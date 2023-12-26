@@ -19,7 +19,7 @@ CREATE TABLE public.rfb_data (
 	pais varchar(100) NULL,
 	data_inicio date NULL,
 	cnae_principal varchar(7) NULL,
-	cnae_secundario varchar(250) NULL,
+	cnae_secundario varchar(3000) NULL,
 	tipo_logradouro varchar(25) NULL,
 	logradouro varchar(250) NULL,
 	numero varchar(8) NULL,
