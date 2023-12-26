@@ -50,7 +50,7 @@ func upsert(r *repository, fields map[string]string, path string) error {
 			return err
 		}	
 
-		msg := fmt.Sprintf("Got %d validation errors", len(errs))
+		msg := fmt.Sprintf("Got %d validation errors\n", len(errs))
 
 		return errors.New(msg)
 	}
@@ -160,14 +160,14 @@ func skipUpsert(r *repository, hash string) (bool, error) {
 
 	err := r.db.QueryRow(query, hash).Scan(&id)
 	if err != nil && err.Error() != noRows {
-		return true, err
+		return false, err
 	} 
 	
 	if err != nil && err.Error() == noRows {
-		return true, nil
+		return false, nil
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func formatDate(s string) string {

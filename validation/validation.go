@@ -28,7 +28,7 @@ var fieldsValid = map[string]int{
 	"pais":                    100,
 	"dataInicio":              8,
 	"cnaePrincipal":           7,
-	"cnaeSecundario":          250,
+	"cnaeSecundario":          3000,
 	"tipoLogradouro":          25,
 	"logradouro":              250,
 	"numero":                  8,
