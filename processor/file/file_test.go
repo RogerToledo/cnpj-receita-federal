@@ -1,6 +1,7 @@
 package file
 
 import (
+	"os"
 	"reflect"
 	"testing"
 )
@@ -99,7 +100,7 @@ func TestISO88591ToUTF8(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Log(tc.description)
-		
+
 		output := ISO88591ToUTF8(tc.input)
 		if output != tc.expected {
 			t.Errorf("ISO88591ToUTF8(%q) = %q; want %q", tc.input, output, tc.expected)
@@ -108,35 +109,35 @@ func TestISO88591ToUTF8(t *testing.T) {
 }
 
 func TestLineToMap(t *testing.T) {
-	var fields = map[string]string {
-		"cnpjBasico": "24770086", 
-		"nomeCidadeExterior": "", 
-		"logradouro": "PADRE CAMARGO", 
-		"cep": "84130000", 
-		"municipio": "7735", 
-		"ddd1": "00", 
-		"situacaoEspecial": "", 
-		"situacaoCadastral": "02", 
-		"ddd2": "", "telefone2": "", 
-		"hash": "e7e59d9c340aa2b66d44167ea1ad38a7c4b4a4e8b27f6fd3fbcc5444339ff8e0", 
-		"dataSituacaoCadastral": "20160510", 
-		"dataInicio": "20160510", 
-		"numero": "341", 
-		"dddFax": "", 
-		"email": "", 
-		"pais": "", 
-		"complemento": "", 
-		"cnpjDV": "08", 
-		"telefone1": "11111111", 
-		"fax": "", 
-		"cnpjOrdem": "0001", 
-		"identificador": "1", 
-		"motivoSituacaoCadastral": "00", 
-		"cnaePrincipal": "2621300", 
-		"cnaeSecundario": "4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300", 
-		"bairro": "CENTRO", 
-		"uf": "PR", "nomeFantasia": "RCPM", 
-		"tipoLogradouro": "RUA", 
+	var fields = map[string]string{
+		"cnpjBasico":         "24770086",
+		"nomeCidadeExterior": "",
+		"logradouro":         "PADRE CAMARGO",
+		"cep":                "84130000",
+		"municipio":          "7735",
+		"ddd1":               "00",
+		"situacaoEspecial":   "",
+		"situacaoCadastral":  "02",
+		"ddd2":               "", "telefone2": "",
+		"hash":                    "e7e59d9c340aa2b66d44167ea1ad38a7c4b4a4e8b27f6fd3fbcc5444339ff8e0",
+		"dataSituacaoCadastral":   "20160510",
+		"dataInicio":              "20160510",
+		"numero":                  "341",
+		"dddFax":                  "",
+		"email":                   "",
+		"pais":                    "",
+		"complemento":             "",
+		"cnpjDV":                  "08",
+		"telefone1":               "11111111",
+		"fax":                     "",
+		"cnpjOrdem":               "0001",
+		"identificador":           "1",
+		"motivoSituacaoCadastral": "00",
+		"cnaePrincipal":           "2621300",
+		"cnaeSecundario":          "4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300",
+		"bairro":                  "CENTRO",
+		"uf":                      "PR", "nomeFantasia": "RCPM",
+		"tipoLogradouro":       "RUA",
 		"dataSituacaoEspecial": "",
 	}
 	cases := []struct {
@@ -158,10 +159,66 @@ func TestLineToMap(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Log(tc.description)
-		
+
 		output := lineToMap(tc.input)
 		if !reflect.DeepEqual(output, tc.expected) {
 			t.Errorf("lineToMap(%q) = %q; want %q", tc.input, output, tc.expected)
+		}
+	}
+}
+
+func TestWriteFile(t *testing.T) {
+	cases := []struct {
+		description string
+		input       []string
+		path        string
+		file        string
+		expected    int
+	}{
+		{
+			description: "Retuns the error if the file is empty",
+			input:       []string{},
+			path:     "../files/txt",
+			file:     "../files/txt/test.txt",
+			expected:    0,
+		},
+		{
+			description: "shoud write the 1 file",
+			input: []string{
+				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+			},
+			path:     "../files/txt",
+			file:     "../files/txt/test.txt",
+			expected: 1,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Log(tc.description)
+
+		output, err := writeFile(tc.input, tc.file)
+		if err != nil {
+			t.Errorf("writeFile(%q) = %q; want %q", tc.input, output, tc.expected)
+		}
+
+		files := ReadDir(tc.path)
+
+		if len(files) != tc.expected {
+			t.Errorf("WriteFile(%q) = %q; want %q", tc.input, output, tc.expected)
+		}
+
+		removeFiles(files)
+		
+	}
+}
+
+func removeFiles(files []string) {
+	for _, file := range files {
+		if err := os.Remove(file); err != nil {
+			panic(err)
 		}
 	}
 }

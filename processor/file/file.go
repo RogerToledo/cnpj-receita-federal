@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	pathTXT   = "files/files/txt"
-	pathEstab = "files/files/estabele"
-	pathDone  = "files/files/done"
+	pathTXT   = "processor/files/txt"
+	pathEstab = "processor/files/estabele"
+	pathDone  = "processor/files/done"
 )
 
 func Process(db *sql.DB, paths []string) error {

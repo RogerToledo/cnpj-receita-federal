@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/me/rfb/db"
-	"github.com/me/rfb/files/file"
+	"github.com/me/rfb/processor/file"
 )
 
 func main() {
-	files := file.ReadDir("files/files/estabele")
+	files := file.ReadDir("processor/files/estabele")
 	
 	db, err := db.NewConnect()
 	if err != nil {
