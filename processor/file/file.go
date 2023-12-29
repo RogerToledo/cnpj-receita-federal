@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	pathTXT   = "files/files/txt"
-	pathEstab = "files/files/estabele"
-	pathDone  = "files/files/done"
+	pathTXT   = "processor/files/txt"
+	pathEstab = "processor/files/estabele"
+	pathDone  = "processor/files/done"
 )
 
 func Process(db *sql.DB, paths []string) error {
@@ -158,6 +158,10 @@ func moveFile(path string) error {
 }
 
 func lineToMap(line string) map[string]string {
+	if line == "" {
+		return map[string]string{}
+	}
+	
 	slice := strings.Split(line, ";")
 
 	base.Fields["cnpjBasico"] = slice[0]
@@ -215,7 +219,10 @@ func getLineHash(line string) string {
 }
 
 func canWrite(line string) bool {
-	cnaes := []string{";2621300;", ";2622100;"}
+	cnaes := []string{
+		";2621300;", ";2621300,", ",2621300,", ",2621300;", 
+		";2622100;", ";2622100,", ",2622100,", ";2622100,",
+	}
 
 	if line == "" {
 		return false
