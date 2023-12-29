@@ -2,8 +2,9 @@ package file
 
 import (
 	"os"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestGetLineHash(t *testing.T) {
@@ -152,7 +153,7 @@ func TestLineToMap(t *testing.T) {
 		},
 		{
 			description: "Retuns the map with the key and value",
-			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
+			input:       "2477008;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
 			expected:    fields,
 		},
 	}
@@ -161,8 +162,9 @@ func TestLineToMap(t *testing.T) {
 		t.Log(tc.description)
 
 		output := lineToMap(tc.input)
-		if !reflect.DeepEqual(output, tc.expected) {
-			t.Errorf("lineToMap(%q) = %q; want %q", tc.input, output, tc.expected)
+		diff := cmp.Diff(output, tc.expected)
+		if diff != "" {
+			t.Errorf("diff: %q\n", diff)
 		}
 	}
 }
@@ -178,8 +180,8 @@ func TestWriteFile(t *testing.T) {
 		{
 			description: "Retuns the error if the file is empty",
 			input:       []string{},
-			path:     "../files/txt",
-			file:     "../files/txt/test.txt",
+			path:        "../files/txt",
+			file:        "../files/txt/test.txt",
 			expected:    0,
 		},
 		{
@@ -211,7 +213,7 @@ func TestWriteFile(t *testing.T) {
 		}
 
 		removeFiles(files)
-		
+
 	}
 }
 
