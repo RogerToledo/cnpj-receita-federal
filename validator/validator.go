@@ -1,10 +1,25 @@
-package validation
+package validator
 
 import (
 	"errors"
 	"fmt"
 	"time"
 )
+
+//Dá pra usar o pacote https://github.com/go-playground/validator pra fazer uma validação mais robusta
+// Ex:
+/*
+type Condominium struct {
+ 	CNPJBase                 string `validate:"len=8"`
+	email                    string `validate:"email"`
+	...
+}
+
+func (c *Condominium) IsValid() error {
+	return validate.Struct(c)
+}
+
+*/
 
 type ErrorStruct = struct {
 	CNPJ  string
@@ -15,6 +30,8 @@ type ErrorStruct = struct {
 	Date  string
 }
 
+//Alguns desses tamanhos não faz sentido serem fixos, ex: nomeFantasia, logradouro, bairro, municipio, nomeCidadeExterior, pais, etc
+// Nesses casos, o ideal é que o tamanho esteja definido no banco de dados, e caso for tentar dar upsert e o tamanho for maior que o do banco, o próprio banco vai retornar o erro
 var fieldsValid = map[string]int{
 	"cnpjBasico":              8,
 	"cnpjOrdem":               4,
@@ -56,14 +73,14 @@ func ValidateData(fields map[string]string, path string) (map[string]string, []E
 	dateNow := date.Format("2006-01-02 03:04:05")
 
 	for k, v := range fields {
-		err := validation(k, v)
+		err := validate(k, v)
 		if err != nil {
 			errors = append(errors, ErrorStruct{
 				CNPJ:  cnpj,
 				Field: k,
 				Value: v,
 				Error: err.Error(),
-				File: path,
+				File:  path,
 				Date:  dateNow,
 			})
 		}
@@ -72,12 +89,11 @@ func ValidateData(fields map[string]string, path string) (map[string]string, []E
 	return fields, errors
 }
 
-func validation(field string, value string) error {
+func validate(field string, value string) error {
 	if len(value) > fieldsValid[field] {
 		msg := fmt.Sprintf("length %d is greater than %d for field %s", len(value), fieldsValid[field], field)
 		return errors.New(msg)
-	} else {
-		return nil
 	}
 
+	return nil
 }
