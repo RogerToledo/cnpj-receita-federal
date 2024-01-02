@@ -1,4 +1,4 @@
-package file
+package processor
 
 import (
 	"os"
@@ -178,8 +178,8 @@ func TestWriteFile(t *testing.T) {
 		{
 			description: "Retuns the error if the file is empty",
 			input:       []string{},
-			path:     "../files/txt",
-			file:     "../files/txt/test.txt",
+			path:        "../files/txt",
+			file:        "../files/txt/test.txt",
 			expected:    0,
 		},
 		{
@@ -211,7 +211,7 @@ func TestWriteFile(t *testing.T) {
 		}
 
 		removeFiles(files)
-		
+
 	}
 }
 
