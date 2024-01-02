@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/me/rfb/config"
+	_ "github.com/lib/pq"
 )
 
-// Aqui ele retorna um db, não seria melhor o nome da função ser NewDB?
 func NewConnect() (*sql.DB, error) {
 	connString := connString()
 	conn, err := sql.Open("postgres", connString)
@@ -28,8 +27,6 @@ func NewConnect() (*sql.DB, error) {
 	return conn, nil
 }
 
-// Se você usar uma variável de ambiente com a connection string, não precisa dessa função
-// Ex: os.Getenv("DATABASE_URL")
 func connString() string {
 	config, err := config.Load()
 	if err != nil {
@@ -43,20 +40,3 @@ func connString() string {
 
 	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, password, host, database)
 }
-
-// Sugestão:
-
-/*
-func NewDB() (*sql.DB, error) {
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-*/
-
-// Outra sugestão, baseado nesse código do Ronaldo:
-// https://github.com/olxbr/ronaldo/blob/master/db/postgres/postgres.go
-// Funções: Client, Close
