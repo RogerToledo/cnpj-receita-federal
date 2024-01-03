@@ -1,4 +1,4 @@
-package file
+package processor
 
 import (
 	"os"
@@ -178,8 +178,8 @@ func TestWriteFile(t *testing.T) {
 		{
 			description: "Retuns the error if the file is empty",
 			input:       []string{},
-			path:     "../files/txt",
-			file:     "../files/txt/test.txt",
+			path:        "../files/txt",
+			file:        "../files/txt/test.txt",
 			expected:    0,
 		},
 		{
@@ -204,14 +204,14 @@ func TestWriteFile(t *testing.T) {
 			t.Errorf("writeFile(%q) = %q; want %q", tc.input, output, tc.expected)
 		}
 
-		files := ReadDir(tc.path)
+		files := getFiles(tc.path)
 
 		if len(files) != tc.expected {
 			t.Errorf("WriteFile(%q) = %q; want %q", tc.input, output, tc.expected)
 		}
 
 		removeFiles(files)
-		
+
 	}
 }
 
