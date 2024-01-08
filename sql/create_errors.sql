@@ -9,7 +9,7 @@ CREATE TABLE public.errors (
 	cnpj varchar(30) NOT NULL,
 	field varchar(255) NULL,
 	value varchar(5000) NULL,
-	error varchar(255) NULL,
+	tag varchar(50) NULL,
 	file varchar(50) NULL,
 	create_at timestamp NULL,
 	CONSTRAINT errors_pkey PRIMARY KEY (id)

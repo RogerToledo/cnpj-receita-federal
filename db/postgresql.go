@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/me/rfb/config"
 	_ "github.com/lib/pq"
+	"github.com/me/rfb/config"
 )
 
-func NewConnect() (*sql.DB, error) {
+func NewDB() (*sql.DB, error) {
 	connString := connString()
 	conn, err := sql.Open("postgres", connString)
 	if err != nil {

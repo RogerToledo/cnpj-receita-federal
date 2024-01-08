@@ -1,4 +1,4 @@
-package file
+package processor
 
 import (
 	"bufio"
@@ -9,18 +9,21 @@ import (
 	"strings"
 
 	"github.com/me/rfb/base"
+	"github.com/me/rfb/entity"
 	"github.com/me/rfb/repository"
 )
 
 const (
 	pathTXT   = "processor/files/txt"
 	pathEstab = "processor/files/estabele"
-	pathDone  = "processor/files/done"
+	pathProces  = "processor/files/processed"
 )
 
-func Process(db *sql.DB, paths []string) error {
+func Process(db *sql.DB) error {
 	fmt.Println("Processing ...")
-	files := ReadDir(pathTXT)
+
+	paths := getFiles(pathEstab)
+	files := getFiles(pathTXT)
 
 	if len(files) == 0 {
 		for _, path := range paths {
@@ -31,7 +34,7 @@ func Process(db *sql.DB, paths []string) error {
 			}
 		}
 
-		files = ReadDir(pathTXT)
+		files = getFiles(pathTXT)
 	}
 
 	for _, file := range files {
@@ -52,25 +55,24 @@ func ReadTXTSave(db *sql.DB, path string) error {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-
+	
 	fileScanner := bufio.NewScanner(file)
 	fileScanner.Split(bufio.ScanLines)
 
+	repository := repository.NewRepository(db)
+
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
-		fields := lineToMap(line)
+		company := lineToCompany(line)
 
-		repository := repository.NewRepository(db)
-
-		err := repository.Save(fields, path)
+		err := repository.Save(company, path)
 		if err != nil {
-			fmt.Printf("error saving on database: %v", err)
+			fmt.Printf("error saving on database: %v\n", err)
 		}
 	}
 
 	if err = moveFile(path); err != nil {
-		fmt.Printf("error moveFile: %v", err)
+		fmt.Printf("error moveFile: %v\n", err)
 	}
 
 	return nil
@@ -91,13 +93,13 @@ func formatTXT(path string) error {
 
 	_, err = writeFile(lines, output)
 	if err != nil {
-		return fmt.Errorf("error writeFile: %s", err)
+		return fmt.Errorf("error writeFile: %s\n", err)
 	}
 
 	return nil
 }
 
-func ReadDir(dir string) []string {
+func getFiles(dir string) []string {
 	fd := make([]string, 0)
 
 	files, err := os.ReadDir(dir)
@@ -124,7 +126,7 @@ func writeFile(lines []string, output string) (string, error) {
 	for _, line := range lines {
 		countLines++
 		line := strings.ReplaceAll(line, "\"", "")
-		
+
 		couldWrite := canWrite(line)
 		if couldWrite {
 			lineUTF8 := ISO88591ToUTF8([]byte(line))
@@ -136,22 +138,21 @@ func writeFile(lines []string, output string) (string, error) {
 			file = strings.Replace(output, ".txt", numFile, 1)
 
 			if err := os.WriteFile(file, []byte(strings.Join(newLines, "\n")), 0644); err != nil {
-				return "", fmt.Errorf("error WriteFile: %s", err)
+				return "", fmt.Errorf("error WriteFile: %s\n", err)
 			}
 			newLines = []string{}
 			num++
 		}
-		continue
 	}
 
 	return file, nil
 }
 
 func moveFile(path string) error {
-	file := strings.Replace(path, pathTXT, pathDone, 1)
+	file := strings.Replace(path, pathTXT, pathProces, 1)
 
 	if err := os.Rename(path, file); err != nil {
-		return fmt.Errorf("error Rename: %s", err)
+		return fmt.Errorf("error moving file: %s\n", err)
 	}
 
 	return nil
@@ -161,7 +162,7 @@ func lineToMap(line string) map[string]string {
 	if line == "" {
 		return map[string]string{}
 	}
-	
+
 	slice := strings.Split(line, ";")
 
 	base.Fields["cnpjBasico"] = slice[0]
@@ -201,6 +202,52 @@ func lineToMap(line string) map[string]string {
 	return m
 }
 
+func lineToCompany(line string) entity.Company {
+	if line == "" {
+		return entity.Company{}
+	}
+
+	slice := strings.Split(line, ";")
+
+	company := entity.Company{
+		CNPJ: slice[0]+slice[1]+slice[2]+slice[3],
+		CNPJBase: slice[0],
+		CNPJOrder: slice[1],
+		CNPJDV: slice[2],
+		Identifier: slice[3],
+		FantasyName: slice[4],
+		CadastralSituation: slice[5],
+		CadastralSituationDate: slice[6],
+		CadastralSituationReason: slice[7],
+		CityNameExterior: slice[8],
+		Country: slice[9],
+		StartDate: slice[10],
+		PrincipalCNAE: slice[11],
+		SecondaryCNAE: slice[12],
+		StreetType: slice[13],
+		Street: slice[14],
+		Number: slice[15],
+		Complement: slice[16],
+		Neighborhood: slice[17],
+		CEP: slice[18],
+		UF: slice[19],
+		Municipality: slice[20],
+		DDD1: slice[21],
+		Phone1: slice[22],
+		DDD2: slice[23],
+		Phone2: slice[24],
+		DDDFax: slice[25],
+		Fax: slice[26],
+		Email: slice[27],
+		SpecialSituation: slice[28],
+		SpecialSituationDate: slice[29],
+		Hash: getLineHash(line),
+
+	}
+
+	return company
+}
+
 func ISO88591ToUTF8(iso88591 []byte) string {
 	buf := make([]rune, len(iso88591))
 	for i, b := range iso88591 {
@@ -220,7 +267,7 @@ func getLineHash(line string) string {
 
 func canWrite(line string) bool {
 	cnaes := []string{
-		";2621300;", ";2621300,", ",2621300,", ",2621300;", 
+		";2621300;", ";2621300,", ",2621300,", ",2621300;",
 		";2622100;", ";2622100,", ",2622100,", ";2622100,",
 	}
 

@@ -111,7 +111,7 @@ const (
 		cnpj,
 		field,
 		value,
-		error,
+		tag,
 		file,
 		create_at
 	) values (
