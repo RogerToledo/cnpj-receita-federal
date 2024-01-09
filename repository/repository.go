@@ -9,32 +9,26 @@ import (
 	"github.com/me/rfb/entity"
 )
 
+type Repository interface {
+	Upsert(company entity.Company, path string) error
+}
+
 type repository struct {
 	db *sql.DB
 }
 
-func NewRepository(db *sql.DB) *repository {
+func NewRepository(db *sql.DB) Repository {
 	return &repository{db}
 }
 
-func (r *repository) Transaction() (*sql.Tx, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
-	return tx, nil
-
-}
-
-func (r *repository) Save(company entity.Company, path string) error {
-	skipUpsert, err := skipUpsert(r, company.Hash)
+func (r *repository) Upsert(company entity.Company, path string) error {
+	skipUpsert, err := r.skipUpsert(company.Hash)
 	if err != nil {
 		return err
 	}
 
 	if !skipUpsert {
-		if err := upsert(r, company, path); err != nil {
+		if err := r.upsert(company, path); err != nil {
 			return err
 		}
 	}
@@ -42,12 +36,12 @@ func (r *repository) Save(company entity.Company, path string) error {
 	return nil
 }
 
-func upsert(r *repository, company entity.Company, path string) error {
+func (r *repository) upsert(company entity.Company, path string) error {
 	company.CNPJ = fmt.Sprintf("%s%s%s%s", company.CNPJBase, company.CNPJOrder, company.CNPJDV, company.Identifier)
 
 	fieldsFail := company.Validate()
 	if len(fieldsFail) != 0 {
-		err := insertError(r, fieldsFail, path)
+		err := r.insertError(fieldsFail, path)
 		if err != nil {
 			return err
 		}
@@ -87,8 +81,7 @@ func upsert(r *repository, company entity.Company, path string) error {
 	email := company.Email
 	situacaoEspecial := company.SpecialSituation
 	dataSituacaoEspecial := formatDate(company.SpecialSituationDate)
-	date := time.Now()
-	dateNow := date.Format("2006-01-02 03:04:05")
+	dateNow := time.Now().Format("2006-01-02 03:04:05")
 	hash := company.Hash
 
 	_, err := r.db.Exec(
@@ -131,7 +124,7 @@ func upsert(r *repository, company entity.Company, path string) error {
 	return err
 }
 
-func insertError(r *repository, errors []entity.CompanyError, path string) error {
+func (r *repository) insertError(errors []entity.CompanyError, path string) error {
 	var err error
 	query := InsertError
 
@@ -153,7 +146,7 @@ func insertError(r *repository, errors []entity.CompanyError, path string) error
 	return err
 }
 
-func skipUpsert(r *repository, hash string) (bool, error) {
+func (r *repository) skipUpsert(hash string) (bool, error) {
 	const noRows = "sql: no rows in result set"
 	var id int
 	query := SelectHash
@@ -163,8 +156,10 @@ func skipUpsert(r *repository, hash string) (bool, error) {
 		return false, err
 	}
 
-	if err != nil && err.Error() == noRows {
-		return false, nil
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
 	}
 
 	return true, nil

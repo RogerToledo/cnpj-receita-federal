@@ -3,23 +3,29 @@ package processor
 import (
 	"bufio"
 	"crypto/sha256"
-	"database/sql"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/me/rfb/base"
 	"github.com/me/rfb/entity"
 	"github.com/me/rfb/repository"
 )
 
 const (
-	pathTXT   = "processor/files/txt"
-	pathEstab = "processor/files/estabele"
-	pathProces  = "processor/files/processed"
+	pathTXT    = "processor/files/txt"
+	pathEstab  = "processor/files/estabele"
+	pathProces = "processor/files/processed"
 )
 
-func Process(db *sql.DB) error {
+type Processor struct {
+	repository repository.Repository
+}
+
+func NewProcessor(repository repository.Repository) *Processor {
+	return &Processor{repository}
+}
+
+func (p Processor) Process() error {
 	fmt.Println("Processing ...")
 
 	paths := getFiles(pathEstab)
@@ -38,7 +44,7 @@ func Process(db *sql.DB) error {
 	}
 
 	for _, file := range files {
-		if err := ReadTXTSave(db, file); err != nil {
+		if err := p.ReadTXTSave(file); err != nil {
 			return err
 		}
 	}
@@ -48,24 +54,22 @@ func Process(db *sql.DB) error {
 	return nil
 }
 
-func ReadTXTSave(db *sql.DB, path string) error {
+func (p Processor) ReadTXTSave(path string) error {
 	fmt.Printf("Reading and Saving path: %s\n", path)
 
 	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
-	
+
 	fileScanner := bufio.NewScanner(file)
 	fileScanner.Split(bufio.ScanLines)
-
-	repository := repository.NewRepository(db)
 
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		company := lineToCompany(line)
 
-		err := repository.Save(company, path)
+		err := p.repository.Upsert(company, path)
 		if err != nil {
 			fmt.Printf("error saving on database: %v\n", err)
 		}
@@ -91,7 +95,7 @@ func formatTXT(path string) error {
 
 	lines := strings.Split(string(data), "\n")
 
-	_, err = writeFile(lines, output)
+	_, err = writeFiles(lines, output)
 	if err != nil {
 		return fmt.Errorf("error writeFile: %s\n", err)
 	}
@@ -114,12 +118,14 @@ func getFiles(dir string) []string {
 	return fd
 }
 
-func writeFile(lines []string, output string) (string, error) {
+func writeFiles(lines []string, output string) (string, error) {
 	const maxLines = 100000
-	newLines := make([]string, 0)
-	countLines := 0
-	num := 0
-	file := ""
+	var (
+		newLines   = make([]string, 0)
+		countLines = 0
+		num        = 0
+		file       = ""
+	)
 
 	fmt.Println("Writing file ...")
 
@@ -158,50 +164,6 @@ func moveFile(path string) error {
 	return nil
 }
 
-func lineToMap(line string) map[string]string {
-	if line == "" {
-		return map[string]string{}
-	}
-
-	slice := strings.Split(line, ";")
-
-	base.Fields["cnpjBasico"] = slice[0]
-	base.Fields["cnpjOrdem"] = slice[1]
-	base.Fields["cnpjDV"] = slice[2]
-	base.Fields["identificador"] = slice[3]
-	base.Fields["nomeFantasia"] = slice[4]
-	base.Fields["situacaoCadastral"] = slice[5]
-	base.Fields["dataSituacaoCadastral"] = slice[6]
-	base.Fields["motivoSituacaoCadastral"] = slice[7]
-	base.Fields["nomeCidadeExterior"] = slice[8]
-	base.Fields["pais"] = slice[9]
-	base.Fields["dataInicio"] = slice[10]
-	base.Fields["cnaePrincipal"] = slice[11]
-	base.Fields["cnaeSecundario"] = slice[12]
-	base.Fields["tipoLogradouro"] = slice[13]
-	base.Fields["logradouro"] = slice[14]
-	base.Fields["numero"] = slice[15]
-	base.Fields["complemento"] = slice[16]
-	base.Fields["bairro"] = slice[17]
-	base.Fields["cep"] = slice[18]
-	base.Fields["uf"] = slice[19]
-	base.Fields["municipio"] = slice[20]
-	base.Fields["ddd1"] = slice[21]
-	base.Fields["telefone1"] = slice[22]
-	base.Fields["ddd2"] = slice[23]
-	base.Fields["telefone2"] = slice[24]
-	base.Fields["dddFax"] = slice[25]
-	base.Fields["fax"] = slice[26]
-	base.Fields["email"] = slice[27]
-	base.Fields["situacaoEspecial"] = slice[28]
-	base.Fields["dataSituacaoEspecial"] = slice[29]
-	base.Fields["hash"] = getLineHash(line)
-
-	m := base.Fields
-
-	return m
-}
-
 func lineToCompany(line string) entity.Company {
 	if line == "" {
 		return entity.Company{}
@@ -210,39 +172,38 @@ func lineToCompany(line string) entity.Company {
 	slice := strings.Split(line, ";")
 
 	company := entity.Company{
-		CNPJ: slice[0]+slice[1]+slice[2]+slice[3],
-		CNPJBase: slice[0],
-		CNPJOrder: slice[1],
-		CNPJDV: slice[2],
-		Identifier: slice[3],
-		FantasyName: slice[4],
-		CadastralSituation: slice[5],
-		CadastralSituationDate: slice[6],
+		CNPJ:                     slice[0] + slice[1] + slice[2] + slice[3],
+		CNPJBase:                 slice[0],
+		CNPJOrder:                slice[1],
+		CNPJDV:                   slice[2],
+		Identifier:               slice[3],
+		FantasyName:              slice[4],
+		CadastralSituation:       slice[5],
+		CadastralSituationDate:   slice[6],
 		CadastralSituationReason: slice[7],
-		CityNameExterior: slice[8],
-		Country: slice[9],
-		StartDate: slice[10],
-		PrincipalCNAE: slice[11],
-		SecondaryCNAE: slice[12],
-		StreetType: slice[13],
-		Street: slice[14],
-		Number: slice[15],
-		Complement: slice[16],
-		Neighborhood: slice[17],
-		CEP: slice[18],
-		UF: slice[19],
-		Municipality: slice[20],
-		DDD1: slice[21],
-		Phone1: slice[22],
-		DDD2: slice[23],
-		Phone2: slice[24],
-		DDDFax: slice[25],
-		Fax: slice[26],
-		Email: slice[27],
-		SpecialSituation: slice[28],
-		SpecialSituationDate: slice[29],
-		Hash: getLineHash(line),
-
+		CityNameExterior:         slice[8],
+		Country:                  slice[9],
+		StartDate:                slice[10],
+		PrincipalCNAE:            slice[11],
+		SecondaryCNAE:            slice[12],
+		StreetType:               slice[13],
+		Street:                   slice[14],
+		Number:                   slice[15],
+		Complement:               slice[16],
+		Neighborhood:             slice[17],
+		CEP:                      slice[18],
+		UF:                       slice[19],
+		Municipality:             slice[20],
+		DDD1:                     slice[21],
+		Phone1:                   slice[22],
+		DDD2:                     slice[23],
+		Phone2:                   slice[24],
+		DDDFax:                   slice[25],
+		Fax:                      slice[26],
+		Email:                    slice[27],
+		SpecialSituation:         slice[28],
+		SpecialSituationDate:     slice[29],
+		Hash:                     getLineHash(line),
 	}
 
 	return company
@@ -257,6 +218,9 @@ func ISO88591ToUTF8(iso88591 []byte) string {
 	return string(buf)
 }
 
+// getLineHash returns the hash of the line with 64 caracters
+// Example: "24591259;0001;12;1;LOJA DA INFO;02;20160414;00;;;;;;;;;;;;"
+// Return: 37a63bad8b1e059bf4eb8f6885bdad01fbb8342851448d4114288a5304728118
 func getLineHash(line string) string {
 	sha := sha256.New()
 
@@ -266,9 +230,10 @@ func getLineHash(line string) string {
 }
 
 func canWrite(line string) bool {
+	lineSplited := strings.Split(line, ";")
+
 	cnaes := []string{
-		";2621300;", ";2621300,", ",2621300,", ",2621300;",
-		";2622100;", ";2622100,", ",2622100,", ";2622100,",
+		"2621300", "2622100",
 	}
 
 	if line == "" {
@@ -276,7 +241,7 @@ func canWrite(line string) bool {
 	}
 
 	for _, cnae := range cnaes {
-		if strings.Contains(line, cnae) {
+		if strings.Contains(lineSplited[11], cnae) || strings.Contains(lineSplited[12], cnae) {
 			return true
 		}
 	}

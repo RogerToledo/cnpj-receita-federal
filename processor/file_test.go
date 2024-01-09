@@ -1,9 +1,12 @@
 package processor
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/me/rfb/entity"
 )
 
 func TestGetLineHash(t *testing.T) {
@@ -109,60 +112,64 @@ func TestISO88591ToUTF8(t *testing.T) {
 }
 
 func TestLineToMap(t *testing.T) {
-	var fields = map[string]string{
-		"cnpjBasico":         "24770086",
-		"nomeCidadeExterior": "",
-		"logradouro":         "PADRE CAMARGO",
-		"cep":                "84130000",
-		"municipio":          "7735",
-		"ddd1":               "00",
-		"situacaoEspecial":   "",
-		"situacaoCadastral":  "02",
-		"ddd2":               "", "telefone2": "",
-		"hash":                    "e7e59d9c340aa2b66d44167ea1ad38a7c4b4a4e8b27f6fd3fbcc5444339ff8e0",
-		"dataSituacaoCadastral":   "20160510",
-		"dataInicio":              "20160510",
-		"numero":                  "341",
-		"dddFax":                  "",
-		"email":                   "",
-		"pais":                    "",
-		"complemento":             "",
-		"cnpjDV":                  "08",
-		"telefone1":               "11111111",
-		"fax":                     "",
-		"cnpjOrdem":               "0001",
-		"identificador":           "1",
-		"motivoSituacaoCadastral": "00",
-		"cnaePrincipal":           "2621300",
-		"cnaeSecundario":          "4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300",
-		"bairro":                  "CENTRO",
-		"uf":                      "PR", "nomeFantasia": "RCPM",
-		"tipoLogradouro":       "RUA",
-		"dataSituacaoEspecial": "",
+	var company = entity.Company{
+		CNPJ:                     "247700860001081",
+		CNPJBase:                 "24770086",
+		CityNameExterior:         "",
+		Street:                   "PADRE CAMARGO",
+		CEP:                      "84130000",
+		Municipality:             "7735",
+		DDD1:                     "00",
+		SpecialSituation:         "",
+		CadastralSituation:       "02",
+		DDD2:                     "",
+		Phone2:                   "",
+		Hash:                     "e7e59d9c340aa2b66d44167ea1ad38a7c4b4a4e8b27f6fd3fbcc5444339ff8e0",
+		CadastralSituationDate:   "20160510",
+		StartDate:                "20160510",
+		Number:                   "341",
+		DDDFax:                   "",
+		Email:                    "",
+		Country:                  "",
+		Complement:               "",
+		CNPJDV:                   "08",
+		Phone1:                   "11111111",
+		Fax:                      "",
+		CNPJOrder:                "0001",
+		Identifier:               "1",
+		CadastralSituationReason: "00",
+		PrincipalCNAE:            "2621300",
+		SecondaryCNAE:            "4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300",
+		Neighborhood:             "CENTRO",
+		UF:                       "PR",
+		FantasyName:              "RCPM",
+		StreetType:               "RUA",
+		SpecialSituationDate:     "",
 	}
+
 	cases := []struct {
 		description string
 		input       string
-		expected    map[string]string
+		expected    entity.Company
 	}{
 		{
 			description: "Retuns the map empty if the line is empty",
 			input:       "",
-			expected:    map[string]string{},
+			expected:    entity.Company{},
 		},
 		{
 			description: "Retuns the map with the key and value",
 			input:       "24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
-			expected:    fields,
+			expected:    company,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Log(tc.description)
 
-		output := lineToMap(tc.input)
+		output := lineToCompany(tc.input)
 		if !reflect.DeepEqual(output, tc.expected) {
-			t.Errorf("lineToMap(%q) = %q; want %q", tc.input, output, tc.expected)
+			t.Errorf("lineToCompany(%q) = %q; want %q", tc.input, output, tc.expected)
 		}
 	}
 }
@@ -178,8 +185,8 @@ func TestWriteFile(t *testing.T) {
 		{
 			description: "Retuns the error if the file is empty",
 			input:       []string{},
-			path:        "../files/txt",
-			file:        "../files/txt/test.txt",
+			path:        "files/txt",
+			file:        "files/txt/test.txt",
 			expected:    0,
 		},
 		{
@@ -190,8 +197,8 @@ func TestWriteFile(t *testing.T) {
 				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
 				"24770086;0001;08;1;RCPM;02;20160510;00;;;20160510;2621300;4541203,4541206,4619200,4753900,6204000,7020400,7112000,7739099,8020001,8211300;RUA;PADRE CAMARGO;341;;CENTRO;84130000;PR;7735;00;11111111;;;;;;;",
 			},
-			path:     "../files/txt",
-			file:     "../files/txt/test.txt",
+			path:     "files/txt",
+			file:     "files/txt/test.txt",
 			expected: 1,
 		},
 	}
@@ -199,7 +206,9 @@ func TestWriteFile(t *testing.T) {
 	for _, tc := range cases {
 		t.Log(tc.description)
 
-		output, err := writeFile(tc.input, tc.file)
+		fmt.Println(os.Getwd())
+
+		output, err := writeFiles(tc.input, tc.file)
 		if err != nil {
 			t.Errorf("writeFile(%q) = %q; want %q", tc.input, output, tc.expected)
 		}
